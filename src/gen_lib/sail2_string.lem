@@ -34,8 +34,52 @@ let string_append = stringAppend
  ***********************************************)
 
 val maybeIntegerOfString : string -> maybe integer
-let maybeIntegerOfString _ = Nothing (* TODO FIXME *)
-declare ocaml target_rep function maybeIntegerOfString = `(fun s -> match int_of_string s with i -> Some (Nat_big_num.of_int i) | exception Failure _ -> None )`
+let maybeIntegerOfString s =
+  if s = "" then Nothing
+  else
+    let rec is_digit_string i =
+      if i >= stringLength s then true
+      else
+        let c = nth s i in
+        if (c >= #'0' && c <= #'9') then is_digit_string (i + 1)
+        else if (i = 0 && (c = #'-' || c = #'+')) then is_digit_string (i + 1)
+        else false
+    in
+    if is_digit_string 0 then Just (integerFromString s) else Nothing
+
+(* Example usage:
+   maybeIntegerOfString "123" = Just 123
+   maybeIntegerOfString "-42" = Just (-42)
+   maybeIntegerOfString "+77" = Just 77
+   maybeIntegerOfString "abc" = Nothing
+   maybeIntegerOfString "12abc" = Nothing
+   maybeIntegerOfString "" = Nothing
+*)
+
+(* Test function for maybeIntegerOfString *)
+let test_maybeIntegerOfString () =
+  let test_cases = [
+    ("123", Just 123);
+    ("-42", Just (-42));
+    ("+77", Just 77);
+    ("abc", Nothing);
+    ("12abc", Nothing);
+    ("", Nothing)
+  ] in
+  let show_maybe_int = function
+    | Just n -> "Just " ^ stringFromInteger n
+    | Nothing -> "Nothing"
+  end in
+  let rec run_tests cases =
+    match cases with
+    | [] -> ()
+    | (input, expected) :: rest ->
+        let result = maybeIntegerOfString input in
+        print_endline ("maybeIntegerOfString '" ^ input ^ "' = " ^ show_maybe_int result ^
+                       (if result = expected then " [OK]" else " [FAIL]"));
+        run_tests rest
+  in
+  run_tests test_cases
 
 (***********************************************
  * end stuff that should be in Lem Num_extra   *
